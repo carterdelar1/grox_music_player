@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(MPDCLIENT REQUIRED libmpdclient)
 
-add_executable(groxmusicplayer main.cpp musicplayer.cpp)
+add_executable(groxmusicplayer main.cpp musicplayer.cpp GUI.cpp)
 
 target_include_directories(groxmusicplayer PUBLIC ${MPDCLIENT_INCLUDE_DIRS})
 
