@@ -14,6 +14,7 @@ void GMP_MENU() {
     cout << "5. Display Queue" << endl;
     cout << "6. Clear Queue" << endl;
     cout << "7. Shuffle" << endl;
+    cout << "8. Display Current Song Status" << endl;
     cout << "q. Quit" << endl;
     cout << "Input: ";
 }
@@ -70,6 +71,11 @@ int main() {
         else if (input == "7") {
             clear();
             GMP.shuffleQueue();
+        }
+
+        else if (input == "8") {
+            clear();
+            GMP.currentPlaybackStatus();
         }
 
         else if (input == "q") {

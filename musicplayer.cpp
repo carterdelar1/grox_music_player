@@ -1,4 +1,5 @@
 #include "musicplayer.h"
+#include <mpd/status.h>
 #include <iostream>
 #include <vector>
 
@@ -104,6 +105,12 @@ void MusicPlayer::play() {
     }
 }
 
+void MusicPlayer::skipTime() {
+    if (!conn) return;
+
+    
+}
+
 void MusicPlayer::pause() {
     if (conn) {
         mpd_run_toggle_pause(conn);
@@ -204,4 +211,110 @@ void MusicPlayer::shuffleQueue() {
     else {
         cerr << "Error: Could not shuffle." << endl;
     }
+}
+
+string MusicPlayer::getCurrentSong() {
+    if (!conn) return "No Connection";
+
+    struct mpd_song* song = mpd_run_current_song(conn);
+    if (!song) return "None";
+
+    string result = getSongNameArtist_FromStruct(song);
+    mpd_song_free(song);
+    return result;
+}
+
+void MusicPlayer::toggleRepeatQueue() {
+    if (!conn) return;
+
+    if (!mpd_send_status(conn)) return;
+    struct mpd_status* status = mpd_recv_status(conn);
+
+    if (status) {
+        bool currentState = mpd_status_get_repeat(status);
+        mpd_status_free(status);
+        mpd_response_finish(conn);
+
+        mpd_run_repeat(conn, !currentState);
+    }
+    else {
+        mpd_response_finish(conn);
+    }
+}
+
+void MusicPlayer::toggleRepeatCurrentSong() {
+    if (!conn) return;
+
+    if (!mpd_send_status(conn)) return;
+    struct mpd_status* status = mpd_recv_status(conn);
+
+    if (status) {
+        bool currentState = mpd_status_get_single(status);
+        mpd_status_free(status);
+        mpd_response_finish(conn);
+
+        mpd_run_single(conn, !currentState);
+    }
+    else {
+        mpd_response_finish(conn);
+    }
+}
+
+int MusicPlayer::getCurrentSongLength() {
+    if (!conn) return 0;
+
+    int length = 0;
+    if (mpd_send_status(conn)) {
+        struct mpd_status* status = mpd_recv_status(conn);
+        if (status) {
+            length = mpd_status_get_total_time(status);
+            mpd_status_free(status);
+        }
+        mpd_response_finish(conn);
+    }
+    return length;
+}
+
+int MusicPlayer::getCurrentSongElapsedTime() {
+    if (!conn) return 0;
+
+    int elapsed_time = 0;
+    if (mpd_send_status(conn)) {
+        struct mpd_status* status = mpd_recv_status(conn);
+        if (status) {
+            elapsed_time = mpd_status_get_elapsed_time(status);
+            mpd_status_free(status);
+        }
+        mpd_response_finish(conn);
+    }
+    return elapsed_time;
+}
+
+string MusicPlayer::formatTime(int secondsInput) {
+    if (secondsInput < 0) return "0:00";
+
+    int minutes = secondsInput / 60;
+    int seconds = secondsInput % 60;
+
+    string secondsString = to_string(seconds);
+
+    if (seconds < 10) {
+        secondsString = "0" + secondsString;
+    }
+    return to_string(minutes) + ":" + secondsString;
+}
+
+void MusicPlayer::outputSongTimeStatus() {
+    int elapsed = getCurrentSongElapsedTime();
+    int total = getCurrentSongLength();
+
+    cout << "[" << formatTime(elapsed) << " / " << formatTime(total) << "]" << endl;
+}
+
+void MusicPlayer::currentPlaybackStatus() {
+    int elapsed = getCurrentSongElapsedTime();
+    int total = getCurrentSongLength();
+
+    cout << "Now Playing: " << getCurrentSong() << endl;
+    cout << "[" << formatTime(elapsed) << " / " << formatTime(total) << "]" << endl;
 }
