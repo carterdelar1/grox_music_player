@@ -11,6 +11,7 @@ class MusicPlayer {
         MusicPlayer();
         ~MusicPlayer();
 
+
         // wipes the current directory and sets the input folder
         // as the base directory
         void setDirectory(const string& subDirectory);
@@ -19,26 +20,25 @@ class MusicPlayer {
         void addDirectory(const string& subDirectory);
 
         // takes a file path and returns the .mp3 formatted "Artist - Title (Album)"
-        string getSongNameArtist_FromPath(const string& path);
+        string getSongTitleArtist_FromPath(const string& path);
 
         // takes the pointer to the song and returns the song formatted "Artist - Title (Album)"
-        string getSongNameArtist_FromStruct(struct mpd_song* song);
+        string getSongTitleArtist_FromStruct(struct mpd_song* song);
+
+        // outputs string with the song's title
+        string getSongTitle(const string& path);
+
+        // outputs string with the song's artist name
+        string getSongArtist(const string& path);
+
+        // outputs string with the song's album name
+        string getSongAlbum(const string& path);
 
         // begins playback
         void play();
 
         // pauses playback
         void pause();
-
-        void nextTrack();
-
-        void previousTrack();
-
-        // takes an amount in seconds and goes forward that amount if positive and back that amount if negative
-        void skipTime(int seconds);
-
-        // takes an amount 
-        void goToTimeInTrack(int seconds);
 
         //displays the current queue
         void showQueue();
@@ -81,7 +81,15 @@ class MusicPlayer {
         // [TimeElapsed(Minutes:Seconds) / TotalTime(Minutes:Seconds)]
         void currentPlaybackStatus();
 
+        // skips forward one track in the queue
+        void nextTrack();
 
-        
-        
+        // goes back one track in the queue
+        void previousTrack();
+
+        // takes an amount in seconds and goes forward that amount if positive and back that amount if negative
+        void skipTime(int seconds);
+
+        // takes an amount of time in seconds and goes to that point in the track
+        void goToTimeInTrack(int seconds);
 };

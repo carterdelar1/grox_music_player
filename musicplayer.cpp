@@ -37,7 +37,7 @@ void MusicPlayer::addDirectory(const string& subDirectory) {
     }
 }
 
-string MusicPlayer::getSongNameArtist_FromPath(const string& path) {
+string MusicPlayer::getSongTitleArtist_FromPath(const string& path) {
     if (!conn) return "Error: No Connection";
 
     if (!mpd_send_list_meta(conn, path.c_str())) {
@@ -73,7 +73,7 @@ string MusicPlayer::getSongNameArtist_FromPath(const string& path) {
 
 }
 
-string MusicPlayer::getSongNameArtist_FromStruct(struct mpd_song* song) {
+string MusicPlayer::getSongTitleArtist_FromStruct(struct mpd_song* song) {
     if (!song) return "Unknown Song";
 
     const char* title = mpd_song_get_tag(song, MPD_TAG_TITLE, 0);
@@ -94,7 +94,89 @@ string MusicPlayer::getSongNameArtist_FromStruct(struct mpd_song* song) {
     return mpd_song_get_uri(song);
 }
 
+string MusicPlayer::getSongTitle(const string& path) {
+    if (!conn) return "Error: No Connection";
 
+    if (!mpd_send_list_meta(conn, path.c_str())) {
+        return "Error: Can't find path.";
+    }
+
+    struct mpd_song* song;
+
+    // sets result as path so it has output if it can't correctly pull
+    // info from the track
+    string output = path;
+    bool gotPath = true;
+
+    while ((song = mpd_recv_song(conn)) != NULL) {
+        if (gotPath) {
+            const char* title = mpd_song_get_tag(song, MPD_TAG_TITLE, 0);
+            if (title) {
+                output = string(title);
+            }
+        }
+        gotPath = false;
+        }
+        mpd_song_free(song);
+    mpd_response_finish(conn);
+    return output;
+}
+
+string MusicPlayer::getSongArtist(const string& path) {
+    if (!conn) return "Error: No Connection";
+
+    if (!mpd_send_list_meta(conn, path.c_str())) {
+        return "Error: Can't find path.";
+    }
+
+    struct mpd_song* song;
+
+    // sets result as path so it has output if it can't correctly pull
+    // info from the track
+    string output = path;
+    bool gotPath = true;
+
+    while ((song = mpd_recv_song(conn)) != NULL) {
+        if (gotPath) {
+            const char* artist = mpd_song_get_tag(song, MPD_TAG_ARTIST, 0);
+            if (artist) {
+                output = string(artist);
+            }
+        }
+        gotPath = false;
+        }
+        mpd_song_free(song);
+    mpd_response_finish(conn);
+    return output;
+}
+
+string MusicPlayer::getSongAlbum(const string& path) {
+    if (!conn) return "Error: No Connection";
+
+    if (!mpd_send_list_meta(conn, path.c_str())) {
+        return "Error: Can't find path.";
+    }
+
+    struct mpd_song* song;
+
+    // sets result as path so it has output if it can't correctly pull
+    // info from the track
+    string output = path;
+    bool gotPath = true;
+
+    while ((song = mpd_recv_song(conn)) != NULL) {
+        if (gotPath) {
+            const char* album = mpd_song_get_tag(song, MPD_TAG_ALBUM, 0);
+            if (album) {
+                output = string(album);
+            }
+        }
+        gotPath = false;
+        }
+        mpd_song_free(song);
+    mpd_response_finish(conn);
+    return output;
+}
 
 
 
@@ -105,11 +187,7 @@ void MusicPlayer::play() {
     }
 }
 
-void MusicPlayer::skipTime() {
-    if (!conn) return;
 
-    
-}
 
 void MusicPlayer::pause() {
     if (conn) {
@@ -132,7 +210,7 @@ void MusicPlayer::showQueue() {
     cout << "--Queue--" << endl;
 
     while ((song = mpd_recv_song(conn)) != NULL) {
-        cout << song_index << ". " << getSongNameArtist_FromStruct(song) << endl;
+        cout << song_index << ". " << getSongTitleArtist_FromStruct(song) << endl;
 
         song_index++;
         mpd_song_free(song);
@@ -157,7 +235,6 @@ void MusicPlayer::clearQueue() {
     }
 }
 
-
 vector<string> MusicPlayer::queueToVector_formatted() {
     vector<string> queueVector;
 
@@ -169,7 +246,7 @@ vector<string> MusicPlayer::queueToVector_formatted() {
 
     struct mpd_song* song;
     while ((song = mpd_recv_song(conn)) != NULL) {
-        queueVector.push_back(getSongNameArtist_FromStruct(song));
+        queueVector.push_back(getSongTitleArtist_FromStruct(song));
 
         mpd_song_free(song);
     }
@@ -219,7 +296,7 @@ string MusicPlayer::getCurrentSong() {
     struct mpd_song* song = mpd_run_current_song(conn);
     if (!song) return "None";
 
-    string result = getSongNameArtist_FromStruct(song);
+    string result = getSongTitleArtist_FromStruct(song);
     mpd_song_free(song);
     return result;
 }
@@ -317,4 +394,77 @@ void MusicPlayer::currentPlaybackStatus() {
 
     cout << "Now Playing: " << getCurrentSong() << endl;
     cout << "[" << formatTime(elapsed) << " / " << formatTime(total) << "]" << endl;
+}
+
+void MusicPlayer::nextTrack() {
+    if (!conn) return;
+
+    if (mpd_run_next(conn)) {
+        cout << "Skipped to next track." << endl;
+    }
+    else {
+        cerr << "Error: Couldn't skip to the next track." << endl;
+    }
+}
+
+void MusicPlayer::previousTrack() {
+    if (!conn) return;
+
+    if (mpd_run_previous(conn)) {
+        cout << "Went back one track." << endl;
+    }
+    cerr << "Error: Couldn't go back a track." << endl;
+}
+
+void MusicPlayer::skipTime(int seconds) {
+    if (!conn) return;
+
+    int songPos = -1;
+
+    if (mpd_send_status(conn)) {
+        struct mpd_status* status = mpd_recv_status(conn);
+        if (status) {
+            songPos = mpd_status_get_song_pos(status);
+            mpd_status_free(status);
+        }
+        mpd_response_finish(conn);
+    }
+
+    if (songPos < 0) return;
+
+    int currentTime = getCurrentSongElapsedTime();
+    int totalTime = getCurrentSongLength();
+    int targetTime = currentTime + seconds;
+    
+    if (targetTime < 0) targetTime = 0;
+    if (totalTime > 0 && targetTime >= totalTime) {
+        targetTime = totalTime - 1;
+    }
+    mpd_run_seek_pos(conn, songPos, targetTime);
+}
+
+void MusicPlayer::goToTimeInTrack(int seconds) {
+    if (!conn) return;
+
+    int songPos = -1;
+
+    if (mpd_send_status(conn)) {
+        struct mpd_status* status = mpd_recv_status(conn);
+        if (status) {
+            songPos = mpd_status_get_song_pos(status);
+            mpd_status_free(status);
+        }
+        mpd_response_finish(conn);
+    }
+
+    if (songPos < 0) return;
+
+    int totalTime = getCurrentSongLength();
+    int targetTime = seconds;
+    
+    if (targetTime < 0) targetTime = 0;
+    if (totalTime > 0 && targetTime >= totalTime) {
+        targetTime = totalTime - 1;
+    }
+    mpd_run_seek_pos(conn, songPos, targetTime);
 }
