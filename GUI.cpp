@@ -98,6 +98,12 @@ class Page {
             texts.push_back({y,x,text});
         }
 
+        void editText(int index, std::string newText) {
+            if (index >= 0 && index < texts.size()) {
+                texts[index].text = newText;
+            }
+        }
+
         void drawHighlightables() {
             for (auto& label : highlightables) {
                 redrawHighlightable(label, false);
@@ -141,16 +147,16 @@ int main() {
 
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax); // Get the size of the terminal
-    WINDOW* testWin = newwin(yMax, xMax, 0, 0); // Create the main window.
+    WINDOW* baseWindow = newwin(yMax, xMax, 0, 0); // Create the main window.
     
-    box(testWin, 0, 0); // Draw a box around the window
+    box(baseWindow, 0, 0); // Draw a box around the window
 
     if (has_colors()) { // Check if terminal supports color
         start_color();  // Enable color usage
         
         init_pair(1, COLOR_GREEN, COLOR_BLACK); 
-        wattron(testWin, COLOR_PAIR(1)); // Set the color pair for text
-        wbkgd(testWin, COLOR_PAIR(1)); // Set background color for the window
+        wattron(baseWindow, COLOR_PAIR(1)); // Set the color pair for text
+        wbkgd(baseWindow, COLOR_PAIR(1)); // Set background color for the window
     }
 // End setup
 
@@ -169,7 +175,20 @@ int main() {
     titleScreen.addText(2, xMax/2 - (title.length()/2), title);
     // End title page
 
-    
+
+    // Play page
+    Page playScreen = Page(xMax, yMax);
+
+    playScreen.addText(10, 3, "Song Name");
+    playScreen.addText(12, 3, "Artist Name");
+    playScreen.addText(14, 3, "Album Name");
+    playScreen.addText(16, 3, "Total Time");
+    // End play page
+
+
+    // Settings page
+
+    // End settings page
 
 
 
@@ -178,11 +197,11 @@ int main() {
 // End create pages
 
 
-    //mvwprintw(testWin, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
+    //mvwprintw(baseWindow, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
     
-    //wrefresh(testWin); // Refresh the window to show the text
+    wrefresh(baseWindow); // Refresh the window to show the text
     
-    wgetch(testWin); // Wait for user input
+    wgetch(baseWindow); // Wait for user input
     endwin(); // End ncurses mode
     return 0;
 }
