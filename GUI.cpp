@@ -175,12 +175,12 @@ int main() {
 
 
 
-// End constants definitions
+// End create pages
 
 
-    mvwprintw(testWin, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
+    //mvwprintw(testWin, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
     
-    wrefresh(testWin); // Refresh the window to show the text
+    //wrefresh(testWin); // Refresh the window to show the text
     
     wgetch(testWin); // Wait for user input
     endwin(); // End ncurses mode
