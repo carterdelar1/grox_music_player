@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <signal.h>
+#include "musicplayer.h"
 
 void cleanup(int sig) {
     endwin();
@@ -20,10 +21,58 @@ class List {
     private:
         int y, x;
         int width, visibleItems;
-
+        std::vector<std::string> songPaths;
+        int selectedIndex = 0;
+        int topIndex = 0; // Index of the topmost visible item
+        int bottomIndex; // Index of the bottommost visible item  
 
     public:
+        List(int y, int x, int width, int visibleItems) {
+            this->y = y;
+            this->x = x;
+            this->width = width;
+            this->visibleItems = visibleItems;
+            this->bottomIndex = visibleItems - 1; // Initialize bottom index based on visible items
 
+        }
+    
+        void addItem(const std::string& songPath) {
+            songPaths.push_back(songPath);
+        }
+
+        void drawList(WINDOW* win) {
+            for (int i = 0; i < visibleItems && (topIndex + i) < songPaths.size(); ++i) {
+                int index = topIndex + i;
+                std::string displayText = songPaths[index].substr(songPaths[index].find_last_of("/\\") + 1); // Extract filename
+                if (index == selectedIndex) {
+                    wattron(win, A_REVERSE); // Highlight selected item
+                    mvwprintw(win, y + i, x, "%-*s", width, displayText.c_str());
+                    wattroff(win, A_REVERSE);
+                } else {
+                    mvwprintw(win, y + i, x, "%-*s", width, displayText.c_str());
+                }
+            }
+        }
+
+        void incrementList() {
+            if (selectedIndex < songPaths.size() - 1) {
+                selectedIndex++;
+                if (selectedIndex > bottomIndex) {
+                    topIndex++;
+                    bottomIndex++;
+                }
+            }
+        }
+
+        void decrementList() {
+            if (selectedIndex > 0) {
+                selectedIndex--;
+                if (selectedIndex < topIndex) {
+                    topIndex--;
+                    bottomIndex--;
+                }
+            }
+        }
 };
 
 class Page {
@@ -74,7 +123,7 @@ int main() {
     signal(SIGINT, cleanup);  // Handles Ctrl+C
     signal(SIGTERM, cleanup); // Handles kill commands
     
-    initscr(); // Initialize the ncurses library
+    initscr(); // Enable the ncurses screen
     curs_set(0); // Hides cursor
 
     int yMax, xMax;
@@ -83,10 +132,13 @@ int main() {
     
 // End setup
 
+// Create pages
+    // Title page
+    
+
     
 
     box(testWin, 0, 0); // Draw a box around the window
-    //wrefresh(testWin); // Refresh the window to show the box
 
     if (has_colors()) { // Check if terminal supports color
         start_color();  // Enable color usage
