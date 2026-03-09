@@ -33,6 +33,8 @@ class MusicPlayer {
 
         vector<string> queueToVector_formatted();
 
+        void shuffleQueue();
+
         
         
 };

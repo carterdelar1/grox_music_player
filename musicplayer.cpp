@@ -194,3 +194,14 @@ vector<string> MusicPlayer::queueToVector_filepath() {
     mpd_response_finish(conn);
     return pathVector;
 }
+
+void MusicPlayer::shuffleQueue() {
+    if (!conn) return;
+
+    if (mpd_run_shuffle(conn)) {
+        cout << "Queue shuffled!" << endl;
+    }
+    else {
+        cerr << "Error: Could not shuffle." << endl;
+    }
+}

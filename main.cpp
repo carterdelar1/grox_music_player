@@ -13,6 +13,7 @@ void GMP_MENU() {
     cout << "4. Pause" << endl;
     cout << "5. Display Queue" << endl;
     cout << "6. Clear Queue" << endl;
+    cout << "7. Shuffle" << endl;
     cout << "q. Quit" << endl;
     cout << "Input: ";
 }
@@ -66,10 +67,17 @@ int main() {
             GMP.clearQueue();
         }
 
+        else if (input == "7") {
+            clear();
+            GMP.shuffleQueue();
+        }
+
         else if (input == "q") {
             clear();
             break;
         }
+
+        
 
         else {
             cout << "Please input correctly." << endl;
