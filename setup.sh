@@ -2,7 +2,7 @@
 
 sudo apt update
 
-sudo apt install -y build-essential cmake mpd libmpdclient-dev pkg-config
+sudo apt install -y build-essential cmake mpd libmpdclient-dev pkg-config libncurses-dev
 
 mkdir -p "$HOME/.config/mpd/playlists"
 
