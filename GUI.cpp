@@ -77,10 +77,11 @@ class List {
 
 class Page {
     private:
-        std::vector<LABEL> labels;
+        std::vector<LABEL> highlightables;
+        std::vector<LABEL> texts;
         int width, height;
 
-        WINDOW* win = nullptr;
+        WINDOW* win;
     public:
         Page(int width, int height) {
             this->width = width;
@@ -89,17 +90,27 @@ class Page {
             win = newwin(height, width, 0, 0);
         }
 
-        void addLabel(int y, int x, std::string text, void (*action)() = nullptr) {
-            labels.push_back({y, x, text});
+        void addHighlightable(int y, int x, std::string text, void (*action)() = nullptr) {
+            highlightables.push_back({y, x, text});
         }
 
-        void drawLabels() {
-            for (const auto& label : labels) {
-                mvwprintw(win, label.y, label.x, "%s", label.text.c_str());
+        void addText(int y, int x, std::string text) {
+            texts.push_back({y,x,text});
+        }
+
+        void drawHighlightables() {
+            for (auto& label : highlightables) {
+                redrawHighlightable(label, false);
             }
         }
 
-        void redrawLabel(LABEL &label, bool inverted = false) {
+        void drawTexts() {
+            for (auto& text : texts) {
+                mvwprintw(win, text.y, text.x, "%s", text.text.c_str());
+            }
+        }
+
+        void redrawHighlightable(LABEL &label, bool inverted = false) {
             if (inverted) {
                 if (has_colors()) {
                     wattron(win, A_REVERSE); // Invert colors for the label
@@ -110,6 +121,8 @@ class Page {
 
         void drawPage() {
             wrefresh(win);
+            drawTexts();
+            drawHighlightables();
         }
 
 
@@ -130,14 +143,6 @@ int main() {
     getmaxyx(stdscr, yMax, xMax); // Get the size of the terminal
     WINDOW* testWin = newwin(yMax, xMax, 0, 0); // Create the main window.
     
-// End setup
-
-// Create pages
-    // Title page
-    
-
-    
-
     box(testWin, 0, 0); // Draw a box around the window
 
     if (has_colors()) { // Check if terminal supports color
@@ -147,14 +152,32 @@ int main() {
         wattron(testWin, COLOR_PAIR(1)); // Set the color pair for text
         wbkgd(testWin, COLOR_PAIR(1)); // Set background color for the window
     }
-    //refresh(); // Refresh the screen to show the changes
+// End setup
 
 // Constants definitions
+    
+// End constants definitions
+
+// Create pages
+    // Title page
     std::string title = "Grox Music Player";
+
+    Page titleScreen = Page(xMax, yMax);
+
+    titleScreen.addHighlightable(yMax/2, 3, "Play");
+    titleScreen.addHighlightable(yMax/2 + 2, 3, "Settings");
+    titleScreen.addText(2, xMax/2 - (title.length()/2), title);
+    // End title page
+
+    
+
+
 
 
 
 // End constants definitions
+
+
     mvwprintw(testWin, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
     
     wrefresh(testWin); // Refresh the window to show the text
