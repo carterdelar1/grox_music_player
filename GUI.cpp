@@ -2,18 +2,26 @@
 #include <string>
 #include <vector>
 #include <signal.h>
+#include <iostream>
 #include "musicplayer.h"
+#include "GUI.h"
 
 void cleanup(int sig) {
     endwin();
     exit(0); 
 }
 
-struct LABEL {
-    int y, x;
-    std::string text;
-    void (*action)() = nullptr; // Optional function pointer for label action
-};
+/*
+LABEL represents some text label on screen.
+LABEL can be highlighted and interacted with via methods within class Page.
+
+Fields:
+    int y - The y coordinate of the first character of the label
+    int x - The x coordinate f the first character of the label
+    string text - The text displayed by the label.
+    command_flag action - 
+*/
+// 
 
 
 
@@ -75,6 +83,7 @@ class List {
         }
 };
 
+
 class Page {
     private:
         std::vector<LABEL> highlightables;
@@ -98,8 +107,8 @@ class Page {
             return win;
         }
 
-        void addHighlightable(int y, int x, std::string text, void (*action)() = nullptr) {
-            highlightables.push_back({y, x, text});
+        void addHighlightable(int y, int x, std::string text, command_flag action = 00000) {
+            highlightables.push_back({y, x, text, action});
         }
 
         void addText(int y, int x, std::string text) {
@@ -127,10 +136,13 @@ class Page {
         void redrawHighlightable(LABEL &label, bool inverted = false) {
             if (inverted) {
                 if (has_colors()) {
-                    wattron(win, A_REVERSE); // Invert colors for the label
+                    wattron(win, COLOR_PAIR(2)); // Invert colors for the label
                 }
             }    
             mvwprintw(win, label.y, label.x, "%s", label.text.c_str());
+            
+            wattron(win, COLOR_PAIR(1));
+
         }
 
         void drawPage() {
@@ -139,6 +151,43 @@ class Page {
             drawHighlightables();
             wrefresh(win);
         }
+        
+        // Handle user input
+        command_flag navigationLoop() {
+                keypad(win, TRUE);
+
+                int ch;
+                int selectedIndex = 0;
+    
+                while ((ch = wgetch(win)) != 'q') { // Press 'q' to quit
+                    switch (ch) {
+                        case KEY_UP:
+                            if (selectedIndex > 0) {
+                                redrawHighlightable(highlightables[selectedIndex], false); // Unhighlight current
+                                selectedIndex--;
+                                redrawHighlightable(highlightables[selectedIndex], true); // Highlight new
+                                wrefresh(win);
+                               
+                            }
+                            break;
+                        case KEY_DOWN:
+                            if (selectedIndex < highlightables.size() - 1) {
+                                redrawHighlightable(highlightables[selectedIndex], false); // Unhighlight current
+                                selectedIndex++;
+                                redrawHighlightable(highlightables[selectedIndex], true); // Highlight new
+                                wrefresh(win);
+                            }
+                            break;
+                        case '\n': // Enter key
+                            werase(win);
+                            return highlightables[selectedIndex].action;
+                            break;
+                    }
+                }
+
+                return 00000; // Exit 
+
+        }
 
 
 };
@@ -146,6 +195,7 @@ class Page {
 
 
 int main() {
+    MusicPlayer player;
 // Setup
     // Set up signal handlers to ensure clean exit.
     signal(SIGINT, cleanup);  // Handles Ctrl+C
@@ -163,7 +213,9 @@ int main() {
     if (has_colors()) { // Check if terminal supports color
         start_color();  // Enable color usage
         
-        init_pair(1, COLOR_GREEN, COLOR_BLACK); 
+        init_pair(1, COLOR_GREEN, COLOR_BLACK); // Main colors
+        init_pair(2, COLOR_BLACK, COLOR_GREEN); // Highlight colors
+
         wattron(baseWindow, COLOR_PAIR(1)); // Set the color pair for text
         wbkgd(baseWindow, COLOR_PAIR(1)); // Set background color for the window
     }
@@ -179,14 +231,14 @@ int main() {
 
     Page titleScreen = Page(xMax-2, yMax-2);
 
-    titleScreen.addHighlightable(yMax/2, 3, "Play");
-    titleScreen.addHighlightable(yMax/2 + 2, 3, "Settings");
+    titleScreen.addHighlightable(yMax/2, 3, "Play", 00002);
+    titleScreen.addHighlightable(yMax/2 + 2, 3, "Settings", 00003);
     titleScreen.addText(2, xMax/2 - (title.length()/2), title);
     // End title page
 
 
     // Play page
-    Page playScreen = Page(xMax, yMax);
+    Page playScreen = Page(xMax-2, yMax-2);
 
     playScreen.addText(10, 3, "Song Name");
     playScreen.addText(12, 3, "Artist Name");
@@ -205,12 +257,36 @@ int main() {
 
 // End create pages
 
-
+    
+    noecho();
     //mvwprintw(baseWindow, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
     
     //wrefresh(baseWindow); // Refresh the window to show the text
-    titleScreen.drawPage();
-    wgetch(titleScreen.getWindow()); // Wait for user input
+   
+
+    command_flag command = 00001; // 
+
+    while (command != 00000) {
+        switch (command) {
+            case 00001:
+                titleScreen.drawPage();
+                command = titleScreen.navigationLoop();
+                break;
+            case 00002:
+                playScreen.drawPage();
+                command = playScreen.navigationLoop();
+
+                player.play();
+                break;
+            case 00003:
+                //settingsScreen.drawPage();
+                //settingsScreen.navigationLoop();
+                break;
+        }
+    }
+    // titleScreen.navigationLoop();
+
+    //wgetch(titleScreen.getWindow()); // Wait for user input
     endwin(); // End ncurses mode
     return 0;
 }
