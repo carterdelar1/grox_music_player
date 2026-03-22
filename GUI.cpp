@@ -88,6 +88,14 @@ class Page {
             this->height = height;
 
             win = newwin(height, width, 0, 0);
+
+            if (has_colors()) {
+                wbkgd(win, COLOR_PAIR(1)); 
+            }
+        }
+
+        WINDOW* getWindow() {
+            return win;
         }
 
         void addHighlightable(int y, int x, std::string text, void (*action)() = nullptr) {
@@ -126,9 +134,10 @@ class Page {
         }
 
         void drawPage() {
-            wrefresh(win);
+            //werase(win);
             drawTexts();
             drawHighlightables();
+            wrefresh(win);
         }
 
 
@@ -168,7 +177,7 @@ int main() {
     // Title page
     std::string title = "Grox Music Player";
 
-    Page titleScreen = Page(xMax, yMax);
+    Page titleScreen = Page(xMax-2, yMax-2);
 
     titleScreen.addHighlightable(yMax/2, 3, "Play");
     titleScreen.addHighlightable(yMax/2 + 2, 3, "Settings");
@@ -199,9 +208,9 @@ int main() {
 
     //mvwprintw(baseWindow, 1, (xMax/2-title.length()/2), "%s",title.c_str()); // Print the title at the top center of the window
     
-    wrefresh(baseWindow); // Refresh the window to show the text
-    
-    wgetch(baseWindow); // Wait for user input
+    //wrefresh(baseWindow); // Refresh the window to show the text
+    titleScreen.drawPage();
+    wgetch(titleScreen.getWindow()); // Wait for user input
     endwin(); // End ncurses mode
     return 0;
 }
